@@ -3,7 +3,13 @@
     "allow": [
       "mcp__ide__getDiagnostics",
       "WebSearch",
-      "WebFetch(domain:angular.dev)"
+      "WebFetch(domain:angular.dev)",
+      "Bash(bun run:*)",
+      "Bash(curl:*)",
+      "mcp__plugin_playwright_playwright__browser_navigate",
+      "mcp__plugin_playwright_playwright__browser_wait_for",
+      "mcp__plugin_playwright_playwright__browser_click",
+      "mcp__plugin_playwright_playwright__browser_console_messages"
     ]
   }
 }

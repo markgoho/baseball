@@ -67,16 +67,17 @@ export function transformExternalPlayer(external: ExternalPlayerData): Player {
  * - MongoDB has 2 players (Barry Bonds with bio, Hank Aaron with bio)
  *
  * Process:
- * 1. Create fast lookup map of local players by ID
+ * 1. Ensure all external player IDs are unique (handle duplicate names)
+ * 2. Create fast lookup map of local players by ID
  *    Map: { "barry-bonds" → {...}, "hank-aaron" → {...} }
  *
- * 2. For each external player (271 total):
+ * 3. For each external player (271 total):
  *    - Check if local override exists in map
  *    - If YES: Merge external + local (local fields override)
  *      Example: { ...externalStats, bio: "Behold Barry Bonds..." }
  *    - If NO: Use external data as-is
  *
- * 3. Return merged array (271 players, 2 have local overrides)
+ * 4. Return merged array (271 players, 2 have local overrides)
  *
  * Performance: O(n) time complexity due to Map lookup
  */
@@ -84,12 +85,26 @@ export function mergePlayerData(
   externalPlayers: Player[],
   localPlayers: Player[]
 ): Player[] {
-  // Create map of local players by ID for O(1) lookup
+  // STEP 1: Ensure unique IDs (handle duplicate player names from API)
+  const idCounts = new Map<string, number>();
+  const uniquePlayers = externalPlayers.map(player => {
+    const baseId = player.id;
+    const count = idCounts.get(baseId) || 0;
+    idCounts.set(baseId, count + 1);
+
+    if (count > 0) {
+      // Duplicate found - append suffix to make unique
+      return { ...player, id: `${baseId}-${count + 1}` };
+    }
+    return player;
+  });
+
+  // STEP 2: Create map of local players by ID for O(1) lookup
   const localMap = new Map(localPlayers.map(p => [p.id, p]));
 
-  // Merge: local data overwrites external data
+  // STEP 3: Merge: local data overwrites external data
   // Spread operator ensures local fields override external fields
-  return externalPlayers.map(external => {
+  return uniquePlayers.map(external => {
     const local = localMap.get(external.id);
     if (local) {
       // Local override exists - merge with local taking precedence
