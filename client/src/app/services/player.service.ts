@@ -1,5 +1,5 @@
-import { Injectable, resource, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, httpResource } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 export interface Player {
@@ -31,18 +31,10 @@ export class PlayerService {
   private readonly apiUrl = 'http://localhost:3000';
 
   // Using experimental httpResource for reactive data fetching
-  players = resource<Player[], void>({
-    loader: async () => {
-      const response = await fetch(`${this.apiUrl}/players`);
-      if (!response.ok) throw new Error('Failed to fetch players');
-      return response.json();
-    }
-  });
+  players = httpResource<Player[]>(() => `${this.apiUrl}/players`);
 
   async updatePlayer(id: string, updates: Partial<Player>): Promise<void> {
-    await firstValueFrom(
-      this.http.put(`${this.apiUrl}/players/${id}`, updates)
-    );
+    await firstValueFrom(this.http.put(`${this.apiUrl}/players/${id}`, updates));
     // Reload players after update
     this.players.reload();
   }

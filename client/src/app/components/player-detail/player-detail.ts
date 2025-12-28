@@ -40,10 +40,8 @@ import { PlayerService, Player } from '../../services/player.service';
           <div class="form-group">
             <label>Bio</label>
             <textarea formControlName="bio" rows="4" placeholder="Player biography..."></textarea>
-            @if (!p.bio && !form.get('bio')?.value) {
-              <button type="button" (click)="onGenerateBio()" [disabled]="generatingBio()" class="generate-btn">
-                {{ generatingBio() ? 'Generating...' : 'Generate Bio with AI' }}
-              </button>
+            @if (generatingBio()) {
+              <p class="generating-message">Generating bio...</p>
             }
           </div>
 
@@ -86,17 +84,12 @@ import { PlayerService, Player } from '../../services/player.service';
       outline: none;
       border-color: #1976d2;
     }
-    .generate-btn {
+    .generating-message {
       margin-top: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      color: #666;
+      font-style: italic;
       font-size: 0.9rem;
     }
-    .generate-btn:hover:not(:disabled) { background: #45a049; }
     .actions { margin-top: 1.5rem; }
     button[type="submit"] {
       padding: 0.75rem 1.5rem;
@@ -152,16 +145,39 @@ export class PlayerDetail {
           bio: p.bio || ''
         });
         this.form.markAsPristine();
+
+        // Auto-generate bio if missing
+        if (!p.bio) {
+          this.onGenerateBio();
+        }
       }
     });
   }
 
+  /**
+   * Save Player Edits
+   * ==================
+   *
+   * Data Flow:
+   * 1. Get form values (all fields: name, position, stats, bio)
+   * 2. Call playerService.updatePlayer(id, updates)
+   *    ↓
+   *    Server: PUT /players/:id → MongoDB upsert
+   *    ↓
+   *    Server: Returns success
+   *    ↓
+   *    Service: players.reload() fetches fresh merged data
+   *    ↓
+   *    UI: PlayerList automatically updates with new data
+   * 3. Mark form as pristine (disables Save button)
+   */
   protected async onSave(): Promise<void> {
     const p = this.player();
     if (!p || !this.form.valid) return;
 
     this.saving.set(true);
     try {
+      // Send all form changes to server → MongoDB
       await this.playerService.updatePlayer(p.id, this.form.value);
       this.form.markAsPristine();
     } catch (error) {
@@ -172,15 +188,38 @@ export class PlayerDetail {
     }
   }
 
+  /**
+   * Generate AI Bio
+   * ================
+   *
+   * Data Flow:
+   * 1. Call playerService.generateBio(player)
+   *    ↓
+   *    Server: POST /generate-bio → Gemini API
+   *    ↓
+   *    Gemini: Generates 2-sentence bio
+   *    ↓
+   *    Server: Returns bio text
+   * 2. Populate form field with bio (NOT saved yet!)
+   * 3. Mark form as dirty (enables Save button)
+   * 4. User can edit AI-generated text
+   * 5. User clicks "Save Changes" to persist
+   *
+   * Note: Bio is NOT automatically saved!
+   * - Gives user chance to review/edit AI output
+   * - User must explicitly click "Save Changes"
+   */
   protected async onGenerateBio(): Promise<void> {
     const p = this.player();
     if (!p) return;
 
     this.generatingBio.set(true);
     try {
+      // Generate bio via Gemini API
       const bio = await this.playerService.generateBio(p);
+      // Populate form field (not saved yet - user must click Save)
       this.form.patchValue({ bio });
-      this.form.markAsDirty();
+      this.form.markAsDirty(); // Enables Save button
     } catch (error) {
       console.error('Error generating bio:', error);
       alert('Failed to generate bio');
