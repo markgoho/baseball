@@ -1,0 +1,21 @@
+{
+  "name": "baseball",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "bun run start:all",
+    "start:all": "concurrently -n \"docker,server,client\" -c \"blue,green,yellow\" \"bun run start:docker\" \"bun run start:server\" \"bun run start:client\"",
+    "start:docker": "docker-compose up",
+    "start:server": "cd server && bun run index.ts",
+    "start:client": "cd client && bun run start",
+    "stop:docker": "docker-compose down"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "concurrently": "^9.2.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

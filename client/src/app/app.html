@@ -1,0 +1,15 @@
+<div class="app-container">
+  <header>
+    <h1>Baseball Player Stats</h1>
+  </header>
+
+  <div class="content">
+    <div class="list-panel">
+      <app-player-list (playerSelected)="onPlayerSelected($event)" />
+    </div>
+
+    <div class="detail-panel">
+      <app-player-detail [player]="selectedPlayer()" />
+    </div>
+  </div>
+</div>
