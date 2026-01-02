@@ -22,6 +22,7 @@ export interface Player {
   obp: number;
   slg: number;
   ops: number;
+  hitsPerGame: number;
   bio?: string;
 }
 

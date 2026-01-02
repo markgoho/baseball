@@ -1,7 +1,7 @@
 import { Component, output, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { PlayerService, Player } from '../../services/player.service';
 
-type SortField = 'hits' | 'homeRuns' | null;
+type SortField = 'hits' | 'homeRuns' | 'hitsPerGame' | null;
 
 @Component({
   selector: 'app-player-list',
@@ -14,6 +14,9 @@ type SortField = 'hits' | 'homeRuns' | null;
         </button>
         <button (click)="sortBy('homeRuns')" [class.active]="sortField() === 'homeRuns'">
           Sort by Home Runs
+        </button>
+        <button (click)="sortBy('hitsPerGame')" [class.active]="sortField() === 'hitsPerGame'">
+          Sort by Hits/Game
         </button>
       </div>
 
@@ -30,6 +33,7 @@ type SortField = 'hits' | 'homeRuns' | null;
               <th>Games</th>
               <th>Hits</th>
               <th>Home Runs</th>
+              <th>Hits/Game</th>
               <th>AVG</th>
               <th>OPS</th>
             </tr>
@@ -42,6 +46,7 @@ type SortField = 'hits' | 'homeRuns' | null;
                 <td>{{ player.games }}</td>
                 <td>{{ player.hits }}</td>
                 <td>{{ player.homeRuns }}</td>
+                <td>{{ player.hitsPerGame.toFixed(3) }}</td>
                 <td>{{ player.avg.toFixed(3) }}</td>
                 <td>{{ player.ops.toFixed(3) }}</td>
               </tr>

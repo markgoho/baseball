@@ -52,7 +52,28 @@ export function transformExternalPlayer(external: ExternalPlayerData): Player {
     avg: external.AVG,
     obp: external["On-base Percentage"],
     slg: external["Slugging Percentage"],
-    ops: external["On-base Plus Slugging"]
+    ops: external["On-base Plus Slugging"],
+    hitsPerGame: external.Games > 0 ? external.Hits / external.Games : 0
+  };
+}
+
+/**
+ * Recalculate Derived Stats
+ * ==========================
+ *
+ * After merging external + local data, we need to recalculate derived fields
+ * because local edits may have changed base stats (hits, games, etc).
+ *
+ * Example:
+ * - User edits J Gonzalez to have 3000 hits instead of 300
+ * - Local MongoDB has old hitsPerGame value (based on 300 hits)
+ * - After merge, hits=3000 but hitsPerGame is still old value
+ * - This function recalculates: hitsPerGame = 3000 / games
+ */
+export function recalculateDerivedStats(player: Player): Player {
+  return {
+    ...player,
+    hitsPerGame: player.games > 0 ? player.hits / player.games : 0
   };
 }
 

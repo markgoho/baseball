@@ -24,7 +24,7 @@ import { Elysia } from "elysia";
 import { closeDB, connectDB, getPlayersCollection } from "./db";
 import { generatePlayerBio } from "./gemini";
 import type { ExternalPlayerData, Player } from "./types";
-import { mergePlayerData, transformExternalPlayer } from "./utils";
+import { mergePlayerData, transformExternalPlayer, recalculateDerivedStats } from "./utils";
 
 const EXTERNAL_API = "https://api.hirefraction.com/api/test/baseball";
 const PORT = 3000;
@@ -89,8 +89,12 @@ const app = new Elysia()
       // See utils.ts mergePlayerData() for merge logic
       const merged = mergePlayerData(externalPlayers, localPlayers);
 
+      // STEP 3.5: Recalculate derived stats after merge
+      // Local edits may have changed base stats (hits, games), so recalculate hitsPerGame
+      const withRecalculatedStats = merged.map(recalculateDerivedStats);
+
       // STEP 4: Return merged data to client
-      return merged;
+      return withRecalculatedStats;
     } catch (error) {
       console.error("Error fetching players:", error);
       throw error;
